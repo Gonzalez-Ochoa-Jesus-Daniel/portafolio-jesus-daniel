@@ -1,26 +1,495 @@
 @import "tailwindcss";
 
+/* --------------------------------------------------------------------------
+   Animatable custom properties.
+   Registering the accent colors lets them transition smoothly when a new
+   section scrolls into view — this is what makes each "chapter" feel
+   different while staying in tune with the rest of the page.
+   -------------------------------------------------------------------------- */
+@property --accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #6fcdf6;
+}
+
+@property --accent-2 {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #a78bfa;
+}
+
+@property --accent-soft {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(111, 205, 246, 0.18);
+}
+
+/* --------------------------------------------------------------------------
+   Design tokens — light theme ("papel"): manga paper and ink.
+   -------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Neutral paper and ink, before the chapter's colour is mixed in. */
+  --paper-base: #f5f3ee;
+  --surface-base: #fffefb;
+
+  /* How much of the chapter accent bleeds into the page. This is what makes
+     the whole screen — not just the details — change colour as you scroll. */
+  --tint-paper: 26%;
+  --tint-surface: 10%;
+
+  /* A darker cut of the accent, for shading on the pixel art. */
+  --accent-deep: color-mix(in srgb, var(--accent) 62%, #1b1b22);
+
+  --paper: color-mix(in srgb, var(--accent) var(--tint-paper), var(--paper-base));
+  --surface: color-mix(
+    in srgb,
+    var(--accent) var(--tint-surface),
+    var(--surface-base)
+  );
+
+  --ink: #16161d;
+  --ink-soft: #4a4a57;
+  --ink-faint: #8e8e9c;
+  --line: #d8d5cc;
+  --dot: rgba(22, 22, 29, 0.2);
+  --accent: #5ec8f8;
+  --accent-2: #a78bfa;
+  --accent-soft: rgba(94, 200, 248, 0.2);
+  --on-accent: #16161d;
+
+  transition:
+    --accent 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    --accent-2 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    --accent-soft 700ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Two soft washes of colour, one per accent, bled in from opposite corners.
+   This is what stops a single flat tint from looking dry. */
+.chapter-glow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 55% at 12% 8%,
+      color-mix(in srgb, var(--accent) 55%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      55% 50% at 92% 88%,
+      color-mix(in srgb, var(--accent-2) 50%, transparent),
+      transparent 70%
+    );
 }
 
+/* Dark theme ("tinta") — the manga read at night. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --paper-base: #0e0e13;
+    --surface-base: #16161d;
+    --tint-paper: 18%;
+    --tint-surface: 12%;
+    --ink: #edebe4;
+    --ink-soft: #a5a3ae;
+    --ink-faint: #6a6875;
+    --line: #2a2a34;
+    --dot: rgba(237, 235, 228, 0.16);
+    --on-accent: #0e0e13;
   }
 }
 
+:root[data-theme="dark"] {
+  --paper-base: #0e0e13;
+  --surface-base: #16161d;
+  --tint-paper: 18%;
+  --tint-surface: 12%;
+  --ink: #edebe4;
+  --ink-soft: #a5a3ae;
+  --ink-faint: #6a6875;
+  --line: #2a2a34;
+  --dot: rgba(237, 235, 228, 0.16);
+  --on-accent: #0e0e13;
+}
+
+/* --------------------------------------------------------------------------
+   Expose tokens to Tailwind utilities (bg-paper, text-ink, font-display...).
+   -------------------------------------------------------------------------- */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --font-display: var(--font-display-jp), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-body-jp), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-mono-code), ui-monospace, "Courier New", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
+
+/* Anchored sections clear the sticky header when jumped to. */
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* --------------------------------------------------------------------------
+   Manga textures
+   -------------------------------------------------------------------------- */
+
+/* Screentone: the halftone dot fill used for shading in printed manga. */
+.screentone {
+  background-image: radial-gradient(var(--dot) 1.1px, transparent 1.2px);
+  background-size: 7px 7px;
+}
+
+.screentone-lg {
+  background-image: radial-gradient(var(--dot) 1.6px, transparent 1.7px);
+  background-size: 12px 12px;
+}
+
+/* Speed lines radiating from the centre, faded out in the middle. */
+.speedlines {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    var(--dot) 0deg 0.3deg,
+    transparent 0.3deg 2.4deg
+  );
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent 24%, #000 72%);
+  mask-image: radial-gradient(circle at 50% 50%, transparent 24%, #000 72%);
+}
+
+/* Ink panel: the hard-bordered frame a manga page is built from. */
+.panel {
+  background: var(--surface);
+  border: 2px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+/* Vertical writing, the way a chapter marker sits in the page gutter. */
+.vertical-jp {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.22em;
+}
+
+/* --------------------------------------------------------------------------
+   Opening sequence, in CSS.
+   The first screen animates without waiting for JavaScript, so the page is
+   never a blank rectangle on a slow connection — and it still reads as a
+   panel being laid down. Stagger comes from an inline animation-delay.
+   -------------------------------------------------------------------------- */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
+@keyframes letter-in {
+  from {
+    opacity: 0;
+    transform: translateY(110%) rotate(6deg);
+  }
+}
+
+@keyframes panel-drop {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotate(-3deg) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-1.5deg);
+  }
+}
+
+@keyframes impact-in {
+  from {
+    opacity: 0;
+    transform: scale(2.2) rotate(-22deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-11deg);
+  }
+}
+
+@keyframes speed-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scale(1.15);
+  }
+  to {
+    opacity: 0.5;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes drift-y {
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.anim-rise {
+  animation: rise-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-letter {
+  display: inline-block;
+  animation: letter-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-panel {
+  animation: panel-drop 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+.anim-impact {
+  animation: impact-in 0.55s cubic-bezier(0.16, 1.2, 0.4, 1) both;
+}
+
+.anim-speed {
+  animation: speed-in 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-drift {
+  animation: drift-y 2s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Scroll reveals — driven by the scroll position itself, in pure CSS.
+   No JavaScript is involved, so text can never get stuck hidden waiting for a
+   script. Browsers without scroll-driven animations simply show everything.
+   -------------------------------------------------------------------------- */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+      animation: rise-in 1s linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+
+    [data-reveal="panel"] {
+      animation-name: panel-drop;
+    }
+
+    [data-reveal="impact"] {
+      animation-name: impact-in;
+      animation-range: entry 10% entry 50%;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Pixel character.
+   Two sprite frames stacked; the top one blanks for a few frames so the
+   character blinks, and the whole thing breathes with a slow bob.
+   -------------------------------------------------------------------------- */
+@keyframes pixel-bob {
+  50% {
+    transform: translateY(-3.5%);
+  }
+}
+
+@keyframes pixel-blink {
+  0%,
+  91%,
+  100% {
+    opacity: 1;
+  }
+  93%,
+  97% {
+    opacity: 0;
+  }
+}
+
+@keyframes pixel-wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-16deg);
+  }
+  40% {
+    transform: rotate(6deg);
+  }
+  60% {
+    transform: rotate(-12deg);
+  }
+}
+
+.pixel-bob {
+  animation: pixel-bob 2.6s ease-in-out infinite;
+}
+
+/* Walk cycle: a quick up-down, with the two step frames alternating on top
+   of each other so the legs actually swap. */
+@keyframes pixel-step {
+  50% {
+    transform: translateY(-8%);
+  }
+}
+
+@keyframes pixel-step-alt {
+  0%,
+  49% {
+    opacity: 0;
+  }
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
+.pixel-step {
+  position: relative;
+  animation: pixel-step 0.42s steps(2, end) infinite;
+}
+
+.pixel-step-alt {
+  animation: pixel-step-alt 0.42s steps(1, end) infinite;
+}
+
+/* A two-beat hop, replayed whenever he arrives in a new chapter. */
+@keyframes pixel-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  28% {
+    transform: translateY(-34%);
+  }
+  52% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(-13%);
+  }
+}
+
+.pixel-hop {
+  animation: pixel-hop 0.62s ease-out;
+}
+
+
+.pixel-blink {
+  animation: pixel-blink 5s steps(1, end) infinite;
+}
+
+.pixel-wave {
+  transform-origin: 70% 20%;
+  animation: pixel-wave 3.4s ease-in-out infinite;
+}
+
+/* Little 2D doodads that drift around the character. */
+@keyframes float-loop {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+  50% {
+    transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) + 8deg));
+  }
+}
+
+.float-loop {
+  animation: float-loop var(--dur, 4s) ease-in-out infinite;
+  animation-delay: var(--lag, 0s);
+}
+
+/* Onomatopoeia — the sound effects printed across a manga panel. */
+.sfx {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--accent);
+  -webkit-text-stroke: 3px var(--ink);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink);
+  line-height: 1;
+  user-select: none;
+}
+
+/* Katakana strip that labels a panel, set small and wide. */
+.kana {
+  font-family: var(--font-display);
+  letter-spacing: 0.3em;
+  color: var(--ink-faint);
+}
+
+/* Brush-style underline that sits behind the text. */
+.ink-mark {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: 100% 0.32em;
+}
+
+/* --------------------------------------------------------------------------
+   Theme toggle icons — swapped by the same tokens that theme the page, so the
+   right one is correct on first paint with no client state involved.
+   -------------------------------------------------------------------------- */
+.theme-icon {
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 250ms ease,
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.theme-icon-moon {
+  opacity: 0;
+  transform: rotate(-70deg) scale(0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-icon-sun {
+    opacity: 0;
+    transform: rotate(70deg) scale(0.6);
+  }
+
+  :root:not([data-theme="light"]) .theme-icon-moon {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:root[data-theme="dark"] .theme-icon-sun {
+  opacity: 0;
+  transform: rotate(70deg) scale(0.6);
+}
+
+:root[data-theme="dark"] .theme-icon-moon {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
