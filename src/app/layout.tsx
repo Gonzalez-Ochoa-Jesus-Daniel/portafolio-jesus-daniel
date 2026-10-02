@@ -34,10 +34,33 @@ const monoCode = JetBrains_Mono({
   display: "swap",
 });
 
+/* On Vercel this resolves to the real domain, so shared links preview
+   correctly; locally it falls back to the dev server. */
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
+const title = "Jesús Daniel González Ochoa — Portafolio";
+const description =
+  "Desarrollador frontend y diseño. Ingeniería en Desarrollo y Gestión de Software, buscando prácticas profesionales.";
+
 export const metadata: Metadata = {
-  title: "Jesús Daniel González Ochoa — Portafolio",
-  description:
-    "Portafolio de desarrollo web de Jesús Daniel González Ochoa, próximo a egresar.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: "Portafolio de Jesús Daniel González Ochoa",
+    locale: "es_MX",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 /**
